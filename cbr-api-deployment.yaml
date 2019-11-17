@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cbr-api
+  labels:
+    app: cbr-api
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 30%
+  selector:
+    matchLabels:
+      app: cbr-api
+  template:
+    metadata:
+      labels:
+        app: cbr-api
+    spec:
+      containers:  
+      - name: cbr-api-container
+        image: stglukhov/cbr-api-images:0.3.3
+        ports:
+        - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /api/rate/EUR/2018-12-31
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbr-api
+  labels:
+    app: cbr-api
+spec:
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    app: cbr-api
+  type: NodePort
